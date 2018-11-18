@@ -2,7 +2,7 @@ pragma solidity ^0.4.22;
 
 contract SimpleLedger {
     address owner;
-    mapping (uint => uint) timeStamp;
+    mapping (uint256 => uint256) timeStamp;
 
     constructor() public {
         owner = msg.sender; // set contract deployer as owner 
