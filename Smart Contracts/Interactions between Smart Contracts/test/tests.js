@@ -1,8 +1,15 @@
 const PermissionSystem = artifacts.require('./PermissionSystem.sol');
-const PermissionManager = artifacts.require('./PermissionManager.sol');
+
 
 // helpers
-const expectThrow = require('./helper.js');
+const {expectRevert} = require('./helper.js');
+// revert throw reasons
+ONLY_OWNER = 'only owner can call this function'
+RECORD_EXISTS = 'record has already been added'
+NO_RECORD = "record doesn't exist"
+MANAGER_EXISTS = "user's permission manager already exists"
+NO_MANAGER = "user doesn't have a permission manager"
+
 
 contract('PermissionSystem', async (accounts) => {
   let instance;
@@ -23,13 +30,13 @@ contract('PermissionSystem', async (accounts) => {
       let recordHash = web3.utils.sha3('record 1');
       await instance.addRecord(recordHash, {from: owner}); // add new record
       let tx = instance.addRecord(recordHash, {from: owner}); // attempt to add it again
-      await expectThrow(tx);
+      await expectRevert(tx, RECORD_EXISTS);
     });
 
     it('should not allow a non-owner to add a new record', async () => {
       let recordHash = web3.utils.sha3('record 3');
       tx = instance.addRecord(recordHash, {from: non_owner_1}); // attempt to add new record
-      await expectThrow(tx);
+      await expectRevert(tx, ONLY_OWNER);
     });
   });
 
@@ -45,14 +52,14 @@ contract('PermissionSystem', async (accounts) => {
       let encodedUser = web3.utils.fromAscii(user)
       await instance.createPermissionManager(encodedUser, {from: owner}); // create first permission manager contract
       let tx = instance.createPermissionManager(encodedUser, {from: owner}); // attempt to create second permission manager contract for same user
-      await expectThrow(tx);
+      await expectRevert(tx, MANAGER_EXISTS);
     });
 
     it('should not allow a non-owner to create a permission manager contract', async () => {
       let user = 'Charlie'
       let encodedUser = web3.utils.fromAscii(user)
       let tx = instance.createPermissionManager(encodedUser, {from: non_owner_1});
-      await expectThrow(tx);
+      await expectRevert(tx, ONLY_OWNER);
     });
   });
 
@@ -69,9 +76,26 @@ contract('PermissionSystem', async (accounts) => {
     it('should not allow owner to grant a new permission to a user without an existing permission manager contract', async () => {
       await instance.addRecord(exampleRecord, {from: owner}) // add an example record
       let tx = instance.grantPermission(encodedUser, exampleRecord, {from: owner}) // grant permission
-      await expectThrow(tx);
+      await expectRevert(tx, NO_MANAGER);
     });
-    
+
+    it('should not allow owner to grant a new permission for a non-existing record to a user with an existing permission manager contract', async () => {
+      await instance.createPermissionManager(encodedUser, {from: owner}); // create permission manager contract
+      let tx = instance.grantPermission(encodedUser, exampleRecord, {from: owner}) // grant permission
+      await expectRevert(tx, NO_RECORD);
+    });
+
+    it('should not allow a non-owner to grant a new permission to a user with an existing permission manager contract', async () => {
+      await instance.addRecord(exampleRecord, {from: owner}) // add an example record
+      await instance.createPermissionManager(encodedUser, {from: owner}); // create permission manager contract
+      let tx = instance.grantPermission(encodedUser, exampleRecord, {from: non_owner_1}) // grant permission
+      await expectRevert(tx, ONLY_OWNER);
+    });
+
+  });
+
+  context('Revoking permissions', async () => {
+
   });
 
 });
