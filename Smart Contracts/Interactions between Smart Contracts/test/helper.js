@@ -3,8 +3,12 @@ module.exports = {
     try {
       await promise;
     } catch(error) {
-      if (error.reason == reason) return;
+      if (error.reason == reason) {
+        return;
+      } else {
+        assert.fail('Unexpected revert throw reason');
+      }
     }
-    assert.fail('Expected revert throw not received')
+    assert.fail('Expected revert throw not received');
   }
 }
