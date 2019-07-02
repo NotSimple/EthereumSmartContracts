@@ -35,7 +35,7 @@ contract PermissionSystem {
     permissionManagers[user] = address(manager);
   }
 
-  function grantPermission(bytes32 user, bytes32 recordHash, uint256 startTime, uint256 endTime) external onlyOwner view {
+  function grantPermission(bytes32 user, bytes32 recordHash) external onlyOwner {
     // call corresponding user permission manager contract and add permission
     require(
       permissionManagers[user] != address(0),
@@ -45,12 +45,25 @@ contract PermissionSystem {
       recordTimeStamps[recordHash] > 0,
       "record doesn't exist"
     );
-    require(
-      startTime < endTime,
-      "start time must be less than end time");
+    PermissionManager manager = PermissionManager(permissionManagers[user]);
+    manager.grantPermission(recordHash);
   }
 
-  function canAccessFileNow(bytes32 recordHash, bytes32 user) external view returns (bool) {
+  function revokePermission(bytes32 user, bytes32 recordHash) external onlyOwner {
+    // call corresponding user permission manager contract and add permission
+    require(
+      permissionManagers[user] != address(0),
+      "user doesn't have a permission manager"
+    );
+    require(
+      recordTimeStamps[recordHash] > 0,
+      "record doesn't exist"
+    );
+    PermissionManager manager = PermissionManager(permissionManagers[user]);
+    manager.revokePermission(recordHash);
+  }
+
+  function canAccessFileNow(bytes32 user, bytes32 recordHash) external view returns (bool) {
     require(
       permissionManagers[user] != address(0),
       "user doesn't have a permission manager"
