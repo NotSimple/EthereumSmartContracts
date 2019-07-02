@@ -60,10 +60,14 @@ contract PermissionSystem {
       "record doesn't exist"
     );
     PermissionManager manager = PermissionManager(permissionManagers[user]);
+    require(
+      manager.hasPermission(recordHash) == true,
+      "permission hasn't been granted"
+      );
     manager.revokePermission(recordHash);
   }
 
-  function canAccessFileNow(bytes32 user, bytes32 recordHash) external view returns (bool) {
+  function hasPermission(bytes32 user, bytes32 recordHash) external view returns (bool) {
     require(
       permissionManagers[user] != address(0),
       "user doesn't have a permission manager"
@@ -73,7 +77,7 @@ contract PermissionSystem {
       "record doesn't exist"
     );
     PermissionManager manager = PermissionManager(permissionManagers[user]);
-    return manager.canAccessFileNow(recordHash); //call corresponding user permission manager contract and ask if user has permission
+    return manager.hasPermission(recordHash); //call corresponding user permission manager contract and ask if user has permission
 
   }
 }
